@@ -1,73 +1,23 @@
 package controllers
 
 import (
-	"bytes"
-	"encoding/json"
+	"fmt"
 	"konsultanku-app/database"
 	"konsultanku-app/errors"
 	"konsultanku-app/models"
 	"log"
 	"net/http"
-	"os"
-	"strings"
 
 	"firebase.google.com/go/auth"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
-var ApiKey string = os.Getenv("API_KEY")
-
-func SendRequest(c *gin.Context, url string, data map[string]interface{}) (userData map[string]interface{}) {
-
-	apiKey := "AIzaSyDS_P0cgEBcinAaHhb5d-vCgFhLe4AP9MU"
-	url += apiKey
-
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		log.Println("Error encoding JSON:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		return
-	}
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		log.Println("Error creating request:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		return
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	client := http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Println("Error making request:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		return
-	}
-	defer resp.Body.Close()
-
-	// Handle the response here
-	var responseBody map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
-		log.Println("Error decoding response:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		return
-	}
-
-	c.JSON(resp.StatusCode, responseBody)
-	if resp.StatusCode == 200 {
-		return responseBody
-	}
-	return
-}
-
 func Register(c *gin.Context) {
-	var person models.Register
 
+	var person models.Register
 	if err := c.ShouldBind(&person); err != nil {
-		c.JSON(400, gin.H{"error": "Invalid form data"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid form data"})
 		return
 	}
 
@@ -80,21 +30,19 @@ func Register(c *gin.Context) {
 		PhotoURL("http://www.example.com/12345678/photo.png").
 		Disabled(false)
 
-	ctx := c.Request.Context()
-	createdUser, err := database.AuthClient.CreateUser(ctx, params)
+	createdUser, err := database.AuthClient.CreateUser(c, params)
 	if err != nil {
-		errors.AuthError(c, err)
+		errors.FirebaseAuthError(c, err)
 		return
 	}
 	log.Printf("Successfully created user: %+v\n", createdUser)
-	c.JSON(200, gin.H{"message": createdUser.UID})
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully create account", "data": createdUser.UID})
 	return
 }
 
 func Login(c *gin.Context) {
 
-	url := "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key="
-
+	url := "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key="
 	var user models.Login
 	if err := c.ShouldBind(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -107,28 +55,37 @@ func Login(c *gin.Context) {
 		"returnSecureToken": true,
 	}
 
-	userData := SendRequest(c, url, data)
-
-	// set session
-	session := sessions.Default(c)
-	session.Set("access_token", userData["idToken"])
-	session.Set("refresh_token", userData["refreshToken"])
-	session.Save()
-
-	return
-}
-
-func Protected(c *gin.Context) {
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
-		c.JSON(401, gin.H{"message": "Authorization header needed"})
+	userData, err := SendRequest(c, url, data)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal Server Error", "data": nil})
 		return
 	}
 
-	token := strings.Split(authHeader, "Bearer ")[1]
+	// set session
+	session := sessions.Default(c)
+	session.Set("refresh_token", userData["refreshToken"])
+	session.Save()
+
+	// set cookie
+	token := userData["idToken"].(string)
+	c.SetCookie("token", token, 3600, "/", "localhost", false, true)
+
+	c.JSON(http.StatusOK, gin.H{"message": "success", "data": userData})
+	return
+
+}
+
+func Protected(c *gin.Context) {
+
+	token, err := c.Cookie("token")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized", "data": nil})
+		return
+	}
+
 	data, err := database.AuthClient.VerifyIDToken(c, token)
 	if err != nil {
-		c.JSON(401, gin.H{"message": err})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized", "data": nil})
 		return
 	}
 
@@ -136,7 +93,7 @@ func Protected(c *gin.Context) {
 	session.Set("userId", data.UID)
 	session.Save()
 
-	c.JSON(200, gin.H{"message": data})
+	c.JSON(http.StatusOK, gin.H{"message": "success", "data": data})
 	return
 }
 
@@ -173,11 +130,16 @@ func ResetPassword(c *gin.Context) {
 }
 
 func Logout(c *gin.Context) {
+
 	session := sessions.Default(c)
 	userId := session.Get("userId")
+	if userId == nil {
+		fmt.Println("userId already gone")
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Logout success", "data": nil})
+		return
+	}
 	if err := database.AuthClient.RevokeRefreshTokens(c, userId.(string)); err != nil {
-		log.Printf("error revoking tokens for user: %+v\n", userId.(string))
-		c.JSON(500, gin.H{"message": err})
+		errors.FirebaseAuthError(c, err)
 		return
 	}
 	session.Clear()

@@ -20,9 +20,12 @@ type Login struct {
 
 type Register struct {
 	emailUser
-	Password    string `form:"password"`
-	PhoneNumber string `form:"phone_number"`
-	Name        string `form:"name"`
+	Password      string `form:"password"`
+	PhoneNumber   string `form:"phone_number"`
+	Name          string `form:"name"`
+	EmailVerified bool
+	PhotoURL      string
+	Disabled      bool
 }
 
 type EmailVerification struct {

@@ -2,13 +2,15 @@ package errors
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
-func AuthError(c *gin.Context, err error) {
+func FirebaseAuthError(c *gin.Context, err error) {
 	var data map[string]interface{}
 
 	stringError := strings.ReplaceAll(err.Error(), "http error status: 400; body: ", "")
@@ -39,10 +41,10 @@ func AuthError(c *gin.Context, err error) {
 		case "TOO_MANY_ATTEMPTS_TRY_LATER":
 			errorMessage = "Terlalu banyak percobaan masuk gagal. Harap coba lagi nanti."
 		}
-		c.JSON(400, gin.H{"message": errorMessage})
+		c.JSON(http.StatusBadRequest, gin.H{"message": errorMessage, "data": nil})
 		return
 	}
-	log.Println("Internal Server Error:", err)
-	c.JSON(500, gin.H{"message": "Internal Server Error"})
+	fmt.Println("Internal Server Error:", err)
+	c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal Server Error", "data": nil})
 	return
 }

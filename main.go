@@ -9,11 +9,19 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
+	"github.com/joho/godotenv"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+
+	err := godotenv.Load(".env")
+	if err != nil {
+		panic("Environment is not detected")
+	}
+
+	cookieSecret := os.Getenv("COOKIE_SECRET")
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -24,7 +32,7 @@ func main() {
 	database.DatabaseConnection()
 
 	router := gin.Default()
-	store := cookie.NewStore([]byte("secret"))
+	store := cookie.NewStore([]byte(cookieSecret))
 	router.Use(sessions.Sessions("mysession", store))
 
 	routes.AuthRouter(router)

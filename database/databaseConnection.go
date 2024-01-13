@@ -11,6 +11,7 @@ import (
 )
 
 var DB *gorm.DB
+var ApiKey string
 
 func DatabaseConnection() {
 
@@ -19,17 +20,14 @@ func DatabaseConnection() {
 		panic("Environment is not detected")
 	}
 
+	ApiKey = os.Getenv("API_KEY")
+
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
 		os.Getenv("DB_USERNAME"),
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
 		os.Getenv("DB_DATABASE"))
-
-	if dsn == "" {
-		panic("dsn not detected")
-	}
-
 	database, err := gorm.Open(mysql.Open(dsn))
 	if err != nil {
 		panic(err.Error())
@@ -43,7 +41,6 @@ func DatabaseConnection() {
 		&models.Problem{},
 		&models.Collaboration{},
 	)
-
 	if databaseError != nil {
 		panic(err.Error())
 	}
