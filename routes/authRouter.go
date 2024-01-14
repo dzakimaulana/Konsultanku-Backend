@@ -8,10 +8,14 @@ import (
 
 func AuthRouter(incomingRoutes *gin.Engine) {
 
-	incomingRoutes.POST("/register", controller.Register)
-	incomingRoutes.POST("/login", controller.Login)
-	incomingRoutes.GET("/protected", controller.Protected)
-	incomingRoutes.POST("/email-verification", controller.EmailVerification)
-	incomingRoutes.POST("/reset-password", controller.ResetPassword)
-	incomingRoutes.POST("/logout", controller.Logout)
+	authGroup := incomingRoutes.Group("/api/v1/auth")
+
+	authGroup.POST("/register", controller.Register)
+	authGroup.POST("/login", controller.Login)
+	authGroup.POST("/email-verification", controller.EmailVerification)
+	authGroup.POST("/reset-password", controller.ResetPassword)
+	authGroup.POST("/logout", controller.Logout)
+
+	// Jika Anda ingin menambahkan middleware ke seluruh grup, Anda bisa melakukannya di sini
+	// authGroup.Use(middleware1, middleware2, ...)
 }

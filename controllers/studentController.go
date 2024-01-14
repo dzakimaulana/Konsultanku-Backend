@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"konsultanku-app/database"
+	"konsultanku-app/database/functions"
 	function "konsultanku-app/database/functions"
 	"konsultanku-app/models"
 	"net/http"
@@ -10,6 +11,23 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+func CreateStudentProfile(c *gin.Context) {
+
+	var getJson map[string]interface{}
+	if err := c.ShouldBindJSON(&getJson); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	studentData, err := functions.CreateStudentAccount(getJson)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err, "data": nil})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully create mse account", "data": studentData})
+	return
+}
 
 func Problem(c *gin.Context) {
 
@@ -33,7 +51,7 @@ func Problem(c *gin.Context) {
 	}
 	result := []map[string]interface{}{}
 	for i := range problems {
-		mse, _ := function.GetMseByID(problems[i].MseID.String())
+		mse, _ := function.GetMseByID(problems[i].MseID)
 		tag, _ := function.GetTagByID(problems[i].TagID)
 		jsonData := map[string]interface{}{
 			"id_problem": problems[i].ID,
@@ -84,5 +102,23 @@ func ProblemByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": jsonData})
+	return
+}
+
+func BuildTeam(c *gin.Context) {
+
+	var getJson map[string]interface{}
+	if err := c.ShouldBindJSON(&getJson); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	studentID, _ := c.Cookie("UID")
+	studentData, err := functions.CreateTeam(studentID, getJson)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err, "data": nil})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully create mse account", "data": studentData})
 	return
 }

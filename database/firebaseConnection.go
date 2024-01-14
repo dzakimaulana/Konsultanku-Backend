@@ -5,10 +5,12 @@ import (
 
 	firebase "firebase.google.com/go"
 	auth "firebase.google.com/go/auth"
+	"firebase.google.com/go/storage"
 	"google.golang.org/api/option"
 )
 
 var AuthClient *auth.Client
+var StorageClient *storage.Client
 
 func FirebaseConnection() {
 	ctx := context.Background()
@@ -23,5 +25,11 @@ func FirebaseConnection() {
 		panic(err)
 	}
 
+	client2, err := app.Storage(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	AuthClient = client
+	StorageClient = client2
 }

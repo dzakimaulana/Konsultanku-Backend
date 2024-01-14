@@ -1,12 +1,30 @@
 package controllers
 
 import (
+	"konsultanku-app/database/functions"
 	function "konsultanku-app/database/functions"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
+
+func CreateMseProfile(c *gin.Context) {
+
+	var getJson map[string]interface{}
+	if err := c.ShouldBindJSON(&getJson); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	mseData, err := functions.CreateMseAccount(getJson)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err, "data": nil})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully create mse account", "data": mseData})
+
+}
 
 func AllComments(c *gin.Context) {
 
@@ -43,16 +61,29 @@ func AllComments(c *gin.Context) {
 
 }
 
+func CreateProblem(c *gin.Context) {
+
+	var getJson map[string]interface{}
+	if err := c.ShouldBindJSON(&getJson); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error(), "data": nil})
+		return
+	}
+
+	mseID, _ := c.Cookie("UID")
+	problemData, err := functions.CreateProblem(mseID, getJson)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error(), "data": nil})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully upload problem", "data": problemData})
+	return
+}
+
 func SendOffer(c *gin.Context) {
 
 	idMseCookie, err := c.Cookie("id_mse")
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "Cookie not found"})
-		return
-	}
-	idMse, err := uuid.Parse(idMseCookie)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -71,7 +102,7 @@ func SendOffer(c *gin.Context) {
 		return
 	}
 
-	sendCollaboration, err := function.SendOffer(idMse, idTeam)
+	sendCollaboration, err := function.SendOffer(idMseCookie, idTeam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return

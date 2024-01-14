@@ -18,3 +18,10 @@ func GetTagByID(idTag int32) (models.Tags, error) {
 	}
 	return tag, nil
 }
+
+func GetTagByName(tagName string) (tag models.Tags, err error) {
+	if err := database.DB.First(&tag, "tag_name = ?", tagName).Error; err != nil {
+		return tag, err
+	}
+	return tag, nil
+}

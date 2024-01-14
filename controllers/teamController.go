@@ -28,7 +28,7 @@ func GetOffers(c *gin.Context) {
 		if getOffers[i].IsCollaboration {
 			continue
 		}
-		mse, _ := functions.GetMseByID(getOffers[i].MseID.String())
+		mse, _ := functions.GetMseByID(getOffers[i].MseID)
 		jsonData := map[string]interface{}{
 			"id_collaboration": getOffers[i].ID,
 			"mse": map[string]interface{}{
@@ -67,7 +67,7 @@ func TeamDecision(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"message": "Successfully collaboration with " + collaboration.MseID.String()})
+		c.JSON(http.StatusOK, gin.H{"message": "Successfully collaboration with " + collaboration.MseID})
 		return
 	} else {
 		c.JSON(http.StatusOK, gin.H{"message": "Successfully refuse the offer!"})

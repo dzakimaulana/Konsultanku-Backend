@@ -48,3 +48,20 @@ func SendRequest(c *gin.Context, url string, data map[string]interface{}) (userD
 	}
 	return userData, err
 }
+
+func GetUserInfo(c *gin.Context, token string) (userInfo map[string]interface{}, err error) {
+
+	url := "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key="
+
+	data := map[string]interface{}{
+		"idToken": token,
+	}
+
+	userInfo, err = SendRequest(c, url, data)
+	if err != nil {
+		return userInfo, err
+	}
+
+	return userInfo, nil
+
+}

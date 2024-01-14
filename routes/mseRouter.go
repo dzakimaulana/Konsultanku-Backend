@@ -2,12 +2,18 @@ package routes
 
 import (
 	controller "konsultanku-app/controllers"
+	"konsultanku-app/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
 
 func MseRouter(incomingRoutes *gin.Engine) {
 
-	incomingRoutes.GET("/api/v1/mse/comments", controller.AllComments)
-	incomingRoutes.POST("/api/v1/mse/send-offer/:id", controller.SendOffer)
+	mseGroup := incomingRoutes.Group("/api/v1/mse")
+	mseGroup.Use(middlewares.MseField)
+
+	mseGroup.POST("/registration", controller.CreateMseProfile)
+	mseGroup.POST("/create-problem", controller.CreateProblem)
+	mseGroup.GET("/comments", controller.AllComments)
+	mseGroup.POST("/send-offer/:id", controller.SendOffer)
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func SendOffer(idMse, idTeam uuid.UUID) (models.Collaboration, error) {
+func SendOffer(idMse string, idTeam uuid.UUID) (models.Collaboration, error) {
 	collaborationID := uuid.New()
 	collaboration := models.Collaboration{
 		ID:     collaborationID,
