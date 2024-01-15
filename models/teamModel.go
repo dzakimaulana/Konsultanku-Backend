@@ -13,7 +13,7 @@ type Team struct {
 
 type TeamComment struct {
 	ID             uuid.UUID `gorm:"type:char(36);primaryKey" json:"id_comment"`
-	TeamID         uuid.UUID `gorm:"type:char(36);default:null" json:"student_id"`
+	TeamID         uuid.UUID `gorm:"type:char(36);default:null" json:"team_id"`
 	ProblemID      uuid.UUID `gorm:"type:char(36);default:null" json:"problem_id"`
 	Comment        string    `gorm:"type:text" json:"comment"`
 	CommentCreated string    `gorm:"not null;type:datetime" json:"comment_created"`

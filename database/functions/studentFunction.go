@@ -22,21 +22,23 @@ func StudentRole(studentID string) bool {
 	return true
 }
 
-func CreateStudentAccount(StudentData map[string]interface{}) (student models.StudentProfile, err error) {
+func CreateStudentAccount(studentData map[string]interface{}) (student models.StudentProfile, err error) {
 
-	birthDate, err := DateConvert(StudentData["date_of_birth"].(string))
+	birthDate, err := DateConvert(studentData["date_of_birth"].(string))
 	if err != nil {
 		return student, err
 	}
+	tag, _ := GetTagByName(studentData["tag_name"].(string))
 	student = models.StudentProfile{
-		ID:          StudentData["id_student"].(string),
+		ID:          studentData["id_student"].(string),
+		TagID:       tag.ID,
 		Role:        "Mahasiswa",
-		StudentName: StudentData["student_name"].(string),
+		StudentName: studentData["student_name"].(string),
 		DateOfBirth: birthDate,
 		IsLeader:    false,
-		Major:       StudentData["major"].(string),
-		University:  StudentData["university"].(string),
-		ClassOf:     StudentData["class_of"].(string),
+		Major:       studentData["major"].(string),
+		University:  studentData["university"].(string),
+		ClassOf:     studentData["class_of"].(string),
 	}
 	if err := database.DB.Create(&student).Error; err != nil {
 		return student, err
@@ -71,6 +73,14 @@ func InTeam(studentID string) (teamID string, err error) {
 	return teamID, nil
 }
 
-func GetStudentByID() {
+func IsLeader(studentID string) bool {
 
+	var student models.StudentProfile
+	if err := database.DB.First(&student, "id = ?", studentID).Error; err != nil {
+		return false
+	}
+	if !student.IsLeader {
+		return false
+	}
+	return true
 }

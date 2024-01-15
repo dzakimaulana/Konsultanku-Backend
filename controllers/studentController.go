@@ -54,6 +54,25 @@ func UpdateStudentProfile(c *gin.Context) {
 	return
 }
 
+func BuildTeam(c *gin.Context) {
+
+	var getJson map[string]interface{}
+	if err := c.ShouldBindJSON(&getJson); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	studentID, _ := c.Cookie("UID")
+	studentProfile, err := functions.CreateTeam(studentID, getJson)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err, "data": nil})
+		return
+	}
+	c.SetCookie("TID", studentProfile["team_name"].(string), 3600, "/", "localhost", false, true)
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully create team", "data": gin.H{"team_name": getJson["team_name"].(string)}})
+	return
+}
+
 func Problem(c *gin.Context) {
 
 	var problems []models.Problem
@@ -130,21 +149,34 @@ func ProblemByID(c *gin.Context) {
 	return
 }
 
-func BuildTeam(c *gin.Context) {
+func LikeProblem(c *gin.Context) {
 
-	var getJson map[string]interface{}
-	if err := c.ShouldBindJSON(&getJson); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	inputJson, err := InputJson(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal server error", "data": nil})
 		return
 	}
+	if err := function.AddLike(inputJson["problem_id"].(string)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal server error", "data": nil})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully like a problem", "data": nil})
+	return
+}
+
+func JoinTeam(c *gin.Context) {
 
 	studentID, _ := c.Cookie("UID")
-	studentProfile, err := functions.CreateTeam(studentID, getJson)
+	inputJson, err := InputJson(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err, "data": nil})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal server error", "data": nil})
 		return
 	}
-	c.SetCookie("TID", studentProfile["team_name"].(string), 3600, "/", "localhost", false, true)
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully create team", "data": gin.H{"team_name": getJson["team_name"].(string)}})
+	resultJson, err := functions.UpdateStudentProfile(studentID, inputJson)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal server error", "data": nil})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Success join", "data": resultJson})
 	return
 }

@@ -9,19 +9,11 @@ import (
 
 func GetOffers(c *gin.Context) {
 
-	idTeam, err := c.Cookie("id_team")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-		return
-	}
-	if idTeam == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Join team first"})
-		return
-	}
-
+	idTeam, _ := c.Cookie("TID")
 	getOffers, err := functions.AnyOffer(idTeam)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal Server Error!"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal Server Error!", "data": nil})
+		return
 	}
 	result := []map[string]interface{}{}
 	for i := range getOffers {
@@ -73,4 +65,29 @@ func TeamDecision(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "Successfully refuse the offer!"})
 		return
 	}
+}
+
+func AddComment(c *gin.Context) {
+
+	studenID, _ := c.Cookie("UID")
+	teamID, _ := functions.InTeam(studenID)
+	problemID := c.Param("problemID")
+	if problemID == "" {
+		c.JSON(http.StatusBadGateway, gin.H{"message": "Where do you want to add", "data": nil})
+		return
+	}
+	inputJson, err := InputJson(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal server error", "data": nil})
+		return
+	}
+	inputJson["team_id"] = teamID
+	inputJson["problem_id"] = problemID
+	resultJson, err := functions.AddComment(inputJson)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal server error", "data": nil})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully add comment", "data": resultJson})
+	return
 }

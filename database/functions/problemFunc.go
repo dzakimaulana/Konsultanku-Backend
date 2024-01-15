@@ -67,3 +67,33 @@ func GetProblemWithTags(category string) ([]models.Problem, error) {
 	database.DB.Find(&problems, "tag_id = ?", tag.ID)
 	return problems, nil
 }
+
+func GetProblemByID(problemID string) (models.Problem, error) {
+
+	var problem models.Problem
+	if err := database.DB.First(&problem, "id = ?", problemID).Error; err != nil {
+		return problem, err
+	}
+	return problem, nil
+}
+
+func UpdateCommentCount(problemID string) error {
+	problem, err := GetProblemByID(problemID)
+	if err != nil {
+		return err
+	}
+	problem.CommentCount += 1
+	database.DB.Save(&problem)
+	return nil
+}
+
+func AddLike(problemID string) error {
+
+	problem, err := GetProblemByID(problemID)
+	if err != nil {
+		return err
+	}
+	problem.Like += 1
+	database.DB.Save(&problem)
+	return nil
+}

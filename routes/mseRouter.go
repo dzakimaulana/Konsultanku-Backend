@@ -9,6 +9,8 @@ import (
 
 func MseRouter(incomingRoutes *gin.Engine) {
 
+	incomingRoutes.POST("/registration", controller.CreateMseProfile)
+
 	mseGroup := incomingRoutes.Group("/api/v1/mse")
 	mseGroup.Use(middlewares.Authenticate, middlewares.MseField)
 
