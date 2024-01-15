@@ -26,6 +26,25 @@ func CreateMseProfile(c *gin.Context) {
 
 }
 
+func UpdateMseProfile(c *gin.Context) {
+
+	mseID, _ := c.Cookie("UID")
+	jsonData, err := InputJson(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal server error", "data": nil})
+		return
+	}
+
+	dataUpdate, err := functions.UpdateMseProfile(mseID, jsonData)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err, "data": nil})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully update data", "data": dataUpdate})
+	return
+
+}
+
 func AllComments(c *gin.Context) {
 
 	idProblemCookie, err := c.Request.Cookie("id_problem")

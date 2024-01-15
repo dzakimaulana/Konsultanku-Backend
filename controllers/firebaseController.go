@@ -65,3 +65,18 @@ func GetUserInfo(c *gin.Context, token string) (userInfo map[string]interface{},
 	return userInfo, nil
 
 }
+
+func RefreshToken(c *gin.Context, refreshToken string) (resultInfo map[string]interface{}, err error) {
+
+	url := "https://securetoken.googleapis.com/v1/token?key="
+	data := map[string]interface{}{
+		"grant_type":    "refresh_token",
+		"refresh_token": refreshToken,
+	}
+	resultInfo, err = SendRequest(c, url, data)
+	if err != nil {
+		return resultInfo, err
+	}
+
+	return resultInfo, nil
+}

@@ -7,17 +7,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func StudentOnly(c *gin.Context) {
+func StudentField(c *gin.Context) {
 
-	studentID, err := c.Cookie("UID")
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unatuhorized", "data": nil})
+	studentID := NeedUserID(c)
+	if studentID == "" {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Unatuhorized", "data": nil})
 		return
 	}
-
-	thisStudent := functions.MseOnly(studentID)
+	c.SetCookie("UID", studentID, 3600, "/", "localhost", false, true)
+	thisStudent := functions.StudentRole(studentID)
 	if !thisStudent {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unatuhorized", "data": nil})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Unatuhorized", "data": nil})
 		return
 	}
 	c.Next()

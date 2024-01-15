@@ -20,7 +20,7 @@ func GetTeamByID(teamID string) (models.Team, error) {
 	return team, nil
 }
 
-func CreateTeam(studenID string, teamData map[string]interface{}) (student models.StudentProfile, err error) {
+func CreateTeam(studenID string, teamData map[string]interface{}) (student map[string]interface{}, err error) {
 
 	teamID := uuid.New()
 	team := models.Team{
@@ -32,14 +32,13 @@ func CreateTeam(studenID string, teamData map[string]interface{}) (student model
 	if err := database.DB.Create(&team).Error; err != nil {
 		return student, err
 	}
-	studentToUpdate := models.StudentProfile{
-		ID:       studenID,
-		TeamID:   teamID,
-		IsLeader: true,
+	dataJson := map[string]interface{}{
+		"team_id":   teamID,
+		"is_leader": true,
 	}
-	updateStudent, err := UpdateStudentProfile(studentToUpdate)
+	_, err = UpdateStudentProfile(studenID, dataJson)
 	if err != nil {
-		return student, err
+		return teamData, err
 	}
-	return updateStudent, nil
+	return teamData, nil
 }

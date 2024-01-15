@@ -29,6 +29,31 @@ func CreateStudentProfile(c *gin.Context) {
 	return
 }
 
+func UpdateStudentProfile(c *gin.Context) {
+
+	studentID, _ := c.Cookie("UID")
+	jsonData, err := InputJson(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal server error", "data": nil})
+		return
+	}
+
+	tag, err := functions.GetTagByName(jsonData["tag_name"].(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal server error", "data": nil})
+		return
+	}
+	jsonData["tag_id"] = tag.ID
+	delete(jsonData, "tag_name")
+	dataUpdate, err := functions.UpdateStudentProfile(studentID, jsonData)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err, "data": nil})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully update data", "data": dataUpdate})
+	return
+}
+
 func Problem(c *gin.Context) {
 
 	var problems []models.Problem
@@ -114,11 +139,12 @@ func BuildTeam(c *gin.Context) {
 	}
 
 	studentID, _ := c.Cookie("UID")
-	studentData, err := functions.CreateTeam(studentID, getJson)
+	studentProfile, err := functions.CreateTeam(studentID, getJson)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err, "data": nil})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully create mse account", "data": studentData})
+	c.SetCookie("TID", studentProfile["team_name"].(string), 3600, "/", "localhost", false, true)
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully create team", "data": gin.H{"team_name": getJson["team_name"].(string)}})
 	return
 }

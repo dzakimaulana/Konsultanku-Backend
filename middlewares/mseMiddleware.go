@@ -9,15 +9,15 @@ import (
 
 func MseField(c *gin.Context) {
 
-	mseID, err := c.Cookie("UID")
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unatuhorized", "data": nil})
+	mseID := NeedUserID(c)
+	if mseID == "" {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Unatuhorized", "data": nil})
 		return
 	}
-
-	thisMse := functions.MseOnly(mseID)
+	c.SetCookie("UID", mseID, 3600, "/", "localhost", false, true)
+	thisMse := functions.MseRole(mseID)
 	if !thisMse {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unatuhorized", "data": nil})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Unatuhorized", "data": nil})
 		return
 	}
 	c.Next()

@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func MseOnly(mseID string) bool {
+func MseRole(mseID string) bool {
 
 	var mse models.MseProfile
 	if err := database.DB.First(&mse, "id = ?", mseID).Error; err != nil {
@@ -37,17 +37,13 @@ func CreateMseAccount(mseData map[string]interface{}) (mse models.MseProfile, er
 	return mse, nil
 }
 
-func UpdateMseAccount(mseData map[string]interface{}) (models.MseProfile, error) {
-	mse := models.MseProfile{
-		OwnerName: mseData["owner_name"].(string),
-		MseName:   mseData["mse_name"].(string),
-		MseType:   mseData["mse_type"].(string),
-		MseSince:  mseData["mse_since"].(string),
+func UpdateMseProfile(mseID string, mseJson map[string]interface{}) (map[string]interface{}, error) {
+
+	result := database.DB.Model(&models.MseProfile{}).Where("id = ?", mseID).Updates(&mseJson)
+	if result.Error != nil {
+		return mseJson, result.Error
 	}
-	if err := database.DB.Create(&mse).Error; err != nil {
-		return mse, err
-	}
-	return mse, nil
+	return mseJson, nil
 }
 
 func GetMseByID(idMse string) (models.MseProfile, error) {

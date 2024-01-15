@@ -1,9 +1,26 @@
 package functions
 
 import (
+	"errors"
 	"konsultanku-app/database"
 	"konsultanku-app/models"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
+
+func StudentRole(studentID string) bool {
+
+	var student models.StudentProfile
+	if err := database.DB.First(&student, "id = ?", studentID).Error; err != nil {
+		return false
+	}
+	role := student.Role
+	if role != "Mahasiswa" {
+		return false
+	}
+	return true
+}
 
 func CreateStudentAccount(StudentData map[string]interface{}) (student models.StudentProfile, err error) {
 
@@ -27,11 +44,33 @@ func CreateStudentAccount(StudentData map[string]interface{}) (student models.St
 	return student, nil
 }
 
-func UpdateStudentProfile(student models.StudentProfile) (models.StudentProfile, error) {
+func UpdateStudentProfile(studentID string, studentJson map[string]interface{}) (map[string]interface{}, error) {
 
-	result := database.DB.Model(&models.StudentProfile{}).Updates(student)
+	result := database.DB.Model(&models.StudentProfile{}).Where("id = ?", studentID).Updates(&studentJson)
 	if result.Error != nil {
-		return student, result.Error
+		return studentJson, result.Error
 	}
-	return student, nil
+	return studentJson, nil
+}
+
+func InTeam(studentID string) (teamID string, err error) {
+
+	var student models.StudentProfile
+	if err := database.DB.Where("id = ?", studentID).First(&student).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return teamID, errors.New("User not found")
+		}
+		return teamID, err
+	}
+
+	inTeam := student.TeamID != uuid.Nil
+	if !inTeam {
+		return teamID, err
+	}
+	teamID = student.TeamID.String()
+	return teamID, nil
+}
+
+func GetStudentByID() {
+
 }
